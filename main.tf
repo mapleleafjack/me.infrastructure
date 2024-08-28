@@ -4,27 +4,40 @@ provider "aws" {
 
 resource "aws_s3_bucket" "frontend_bucket" {
     bucket = "me-frontend-bucket"
-    acl = "public-read"
-
-    website {
-        index_document = "index.html"
-        error_document = "index.html"
-    }
 }
 
+resource "aws_s3_bucket_acl" "frontend_bucket_acl" {
+    bucket = aws_s3_bucket.frontend_bucket.bucket
+    acl    = "public-read"
+}
 
-resource "aws_s3_bucket_object" "frontend_app" {
+resource "aws_s3_bucket_website_configuration" "react_app_bucket_website" {
+  bucket = aws_s3_bucket.frontend_bucket.id
+
+  index_document {
+    suffix = "index.html"
+  }
+
+  error_document {
+    key = "index.html"
+  }
+}
+
+resource "aws_s3_object" "frontend_app" {
     for_each = fileset("${path.module}/../me.frontend/build", "**/*")
 
     bucket = aws_s3_bucket.frontend_bucket.bucket
-    key = each.value
+    key    = each.value
     source = "${path.module}/../me.frontend/build/${each.value}"
     etag   = filemd5("${path.module}/../me.frontend/build/${each.value}")
-    content_type = mime_type(each.value)
 }
 
 output "bucket_url" {
-  value = aws_s3_bucket.frontend_bucket.website_endpoint
+  value = aws_s3_bucket_website_configuration.react_app_bucket_website.website_endpoint
+}
+
+resource "aws_cloudfront_origin_access_identity" "origin_access_identity" {
+  comment = "Access identity for S3 bucket"
 }
 
 resource "aws_cloudfront_distribution" "cdn" {
@@ -33,7 +46,7 @@ resource "aws_cloudfront_distribution" "cdn" {
     origin_id   = aws_s3_bucket.frontend_bucket.id
 
     s3_origin_config {
-      origin_access_identity = aws_cloudfront_origin_access_identity.s3_access_identity.cloudfront_access_identity_path
+      origin_access_identity = aws_cloudfront_origin_access_identity.origin_access_identity.cloudfront_access_identity_path
     }
    }
 
@@ -71,6 +84,3 @@ resource "aws_cloudfront_distribution" "cdn" {
     }
 }
 
-resource "aws_cloudfront_origin_access_identity" "origin_access_identity" {
-  comment = "Access identity for S3 bucket"
-}

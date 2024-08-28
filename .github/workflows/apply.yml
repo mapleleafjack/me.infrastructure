@@ -31,4 +31,5 @@ jobs:
       run: terraform apply -auto-approve
 
     - name: Output CloudFront URL
-      run: echo "CloudFront URL: $(terraform output cloudfront_url)"
+      run: |
+        echo "CloudFront URL: $(terraform output cloudfront_url)"

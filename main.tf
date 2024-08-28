@@ -4,7 +4,7 @@ provider "aws" {
 
 # S3 Bucket for Frontend
 resource "aws_s3_bucket" "frontend_bucket" {
-    bucket = "me-frontend-bucket"  # Ensure this name is globally unique
+    bucket = "me-frontend-bucket" 
 }
 
 # Upload React App Files to S3 Bucket
@@ -24,7 +24,6 @@ resource "aws_s3_object" "frontend_app" {
         "png"  = "image/png",
         "jpg"  = "image/jpeg",
         "svg"  = "image/svg+xml",
-        # Add more as necessary
     }, split(".", each.value)[length(split(".", each.value)) - 1], "application/octet-stream")
 }
 
@@ -77,7 +76,7 @@ resource "aws_cloudfront_distribution" "cdn" {
         cloudfront_default_certificate = true
     }
 
-    depends_on = [aws_s3_object.frontend_app] # Ensure the objects are uploaded first
+    depends_on = [aws_s3_object.frontend_app] 
 }
 
 # S3 Bucket Policy for CloudFront OAI

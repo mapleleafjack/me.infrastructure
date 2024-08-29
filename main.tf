@@ -7,6 +7,28 @@ resource "aws_s3_bucket" "frontend_bucket" {
     bucket = "me-frontend-bucket" 
 }
 
+# Versioning on the S3 bucket to prevent accidental deletions
+resource "aws_s3_bucket_versioning" "frontend_bucket_versioning" {
+    bucket = aws_s3_bucket.frontend_bucket.bucket
+
+    versioning_configuration {
+        status = "Enabled"
+    }
+}
+
+# Logging bucket
+resource "aws_s3_bucket" "logging_bucket" {
+    bucket = "me-frontend-logs"
+}
+
+# Connecting logging to frontend bucket
+resource "aws_s3_bucket_logging" "frontend_bucket_logging" {
+    bucket = aws_s3_bucket.frontend_bucket.id
+
+    target_bucket = aws_s3_bucket.logging_bucket.bucket
+    target_prefix = "log/"
+}
+
 # Upload React App Files to S3 Bucket
 resource "aws_s3_object" "frontend_app" {
     for_each = fileset("${path.module}/../me.frontend/build", "**/*")

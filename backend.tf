@@ -134,6 +134,29 @@ resource "aws_ecs_task_definition" "backend_task" {
       hostPort      = 5000
       protocol      = "tcp"
     }]
+
+    environment = [
+      {
+        name  = "DB_HOST"
+        value = aws_db_instance.postgresql.address
+      },
+      {
+        name  = "DB_PORT"
+        value = "5432"
+      },
+      {
+        name  = "DB_USER"
+        value = var.db_username
+      },
+      {
+        name  = "DB_PASSWORD"
+        value = var.db_password
+      },
+      {
+        name  = "DB_NAME"
+        value = "backenddb"
+      }
+    ]
   }])
 }
 

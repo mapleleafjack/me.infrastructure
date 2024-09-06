@@ -29,26 +29,6 @@ resource "aws_s3_bucket_logging" "frontend_bucket_logging" {
   target_prefix = "log/"
 }
 
-# Upload React App Files to S3 Bucket
-resource "aws_s3_object" "frontend_app" {
-  for_each = fileset("${path.module}/../me.frontend/build", "**/*")
-
-  bucket = aws_s3_bucket.frontend_bucket.bucket
-  key    = each.value
-  source = "${path.module}/../me.frontend/build/${each.value}"
-  etag   = filemd5("${path.module}/../me.frontend/build/${each.value}")
-
-  # Set Content-Type based on file extension
-  content_type = lookup({
-    "html" = "text/html",
-    "css"  = "text/css",
-    "js"   = "application/javascript",
-    "png"  = "image/png",
-    "jpg"  = "image/jpeg",
-    "svg"  = "image/svg+xml",
-  }, split(".", each.value)[length(split(".", each.value)) - 1], "application/octet-stream")
-}
-
 # CloudFront Origin Access Identity (OAI)
 resource "aws_cloudfront_origin_access_identity" "origin_access_identity" {
   comment = "Access identity for S3 bucket"
@@ -97,8 +77,6 @@ resource "aws_cloudfront_distribution" "cdn" {
   viewer_certificate {
     cloudfront_default_certificate = true
   }
-
-  depends_on = [aws_s3_object.frontend_app]
 }
 
 # S3 Bucket Policy for CloudFront OAI

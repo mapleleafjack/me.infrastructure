@@ -157,6 +157,16 @@ resource "aws_ecs_task_definition" "backend_task" {
         value = "backenddb"
       }
     ]
+
+    # Log configuration to send logs to CloudWatch Logs
+    logConfiguration = {
+      logDriver = "awslogs"
+      options = {
+        awslogs-group         = "/ecs/me-backend-task"
+        awslogs-region        = "eu-west-1" # Replace with your AWS region
+        awslogs-stream-prefix = "ecs"
+      }
+    }
   }])
 }
 

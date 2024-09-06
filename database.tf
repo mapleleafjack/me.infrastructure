@@ -33,7 +33,7 @@ resource "aws_security_group" "postgresql_sg" {
 resource "aws_db_instance" "postgresql" {
   allocated_storage      = 20 # Adjust storage size as per your requirements
   engine                 = "postgres"
-  engine_version         = "16.4" # Adjust version as needed
+  engine_version         = "16.4"        # Adjust version as needed
   instance_class         = "db.t3.micro" # Adjust instance type as needed
   db_name                = "backenddb"
   username               = var.db_username

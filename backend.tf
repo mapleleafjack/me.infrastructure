@@ -92,8 +92,8 @@ resource "aws_iam_role" "ecs_task_execution_role" {
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
-      Action    = "sts:AssumeRole"
-      Effect    = "Allow"
+      Action = "sts:AssumeRole"
+      Effect = "Allow"
       Principal = {
         Service = "ecs-tasks.amazonaws.com"
       }
@@ -111,13 +111,19 @@ resource "aws_ecr_repository" "backend_repo" {
   name = "me-backend-repo"
 }
 
+# Create CloudWatch Log Group for ECS Tasks
+resource "aws_cloudwatch_log_group" "ecs_log_group" {
+  name              = "/ecs/me-backend-task"
+  retention_in_days = 7 # Adjust as needed for how long you want to keep logs
+}
+
 # ECS Task Definition for Backend
 resource "aws_ecs_task_definition" "backend_task" {
   family                   = "me-backend-task"
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
-  cpu                      = "256"   # Adjust based on your backend requirements
-  memory                   = "512"   # Adjust based on your backend requirements
+  cpu                      = "256" # Adjust based on your backend requirements
+  memory                   = "512" # Adjust based on your backend requirements
 
   execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
   task_role_arn      = aws_iam_role.ecs_task_execution_role.arn
@@ -208,21 +214,21 @@ resource "aws_lb" "backend_lb" {
 
 # Target Group for Backend Service
 resource "aws_lb_target_group" "backend_tg" {
-  name     = "me-backend-tg"
-  port     = 5000
-  protocol = "HTTP"
-  vpc_id   = aws_vpc.main.id
+  name        = "me-backend-tg"
+  port        = 5000
+  protocol    = "HTTP"
+  vpc_id      = aws_vpc.main.id
   target_type = "ip"
 
-    health_check {
-        path                = "/"
-        protocol            = "HTTP"
-        port                = "traffic-port"
-        interval            = 30
-        timeout             = 5
-        unhealthy_threshold = 2
-        healthy_threshold   = 2
-    }
+  health_check {
+    path                = "/"
+    protocol            = "HTTP"
+    port                = "traffic-port"
+    interval            = 30
+    timeout             = 5
+    unhealthy_threshold = 2
+    healthy_threshold   = 2
+  }
 
   tags = {
     Name = "backend-tg"

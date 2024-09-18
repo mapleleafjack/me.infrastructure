@@ -21,17 +21,15 @@ resource "aws_s3_bucket_versioning" "frontend_bucket_versioning" {
   }
 }
 
-# Logging bucket
-resource "aws_s3_bucket" "logging_bucket" {
-  bucket = "me-frontend-logs"
+# S3 Bucket for CloudFront Logs (in eu-west-1)
+resource "aws_s3_bucket" "cloudfront_logs_bucket" {
+  bucket = "me-frontend-cloudfront-logs"
 }
 
-# Connecting logging to frontend bucket
-resource "aws_s3_bucket_logging" "frontend_bucket_logging" {
-  bucket = aws_s3_bucket.frontend_bucket.id
-
-  target_bucket = aws_s3_bucket.logging_bucket.bucket
-  target_prefix = "log/"
+# Apply the ACL using aws_s3_bucket_acl
+resource "aws_s3_bucket_acl" "cloudfront_logs_acl" {
+  bucket = aws_s3_bucket.cloudfront_logs_bucket.id
+  acl    = "log-delivery-write"
 }
 
 # CloudFront Origin Access Identity (OAI)
@@ -53,6 +51,8 @@ resource "aws_cloudfront_distribution" "cdn" {
   enabled             = true
   is_ipv6_enabled     = true
   default_root_object = "index.html"
+
+  aliases = ["www.jackmusajo.it"]
 
   default_cache_behavior {
     allowed_methods  = ["GET", "HEAD", "OPTIONS"]
@@ -85,6 +85,12 @@ resource "aws_cloudfront_distribution" "cdn" {
     minimum_protocol_version = "TLSv1.2_2021"
   }
 
+  logging_config {
+    bucket = aws_s3_bucket.cloudfront_logs_bucket.bucket_domain_name
+    include_cookies = false
+    prefix = "frontend-logs/"
+  }
+
   depends_on = [aws_acm_certificate_validation.www_certificate] # Ensure validation is complete first
 }
 
@@ -108,6 +114,25 @@ resource "aws_s3_bucket_policy" "frontend_bucket_policy" {
   })
 }
 
+resource "aws_s3_bucket_policy" "cloudfront_logs_bucket_policy" {
+  bucket = aws_s3_bucket.cloudfront_logs_bucket.id
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Principal = {
+          Service = "cloudfront.amazonaws.com"
+        },
+        Action = "s3:PutObject",
+        Resource = "${aws_s3_bucket.cloudfront_logs_bucket.arn}/*"
+      }
+    ]
+  })
+}
+
+
 # Output the CloudFront Distribution URL
 output "cloudfront_url" {
   value = aws_cloudfront_distribution.cdn.domain_name
@@ -116,4 +141,9 @@ output "cloudfront_url" {
 # Output the CloudFront Distribution ID
 output "cloudfront_distribution_id" {
   value = aws_cloudfront_distribution.cdn.id
+}
+
+# Output for the logs bucket
+output "cloudfront_logs_bucket" {
+  value = aws_s3_bucket.cloudfront_logs_bucket.bucket_domain_name
 }

@@ -1,5 +1,10 @@
 provider "aws" {
-  region = "eu-west-1"
+  region = "eu-west-1" # Your default region for other resources
+}
+
+provider "aws" {
+  alias  = "us_east_1"
+  region = "us-east-1" # This provider is specifically for ACM in us-east-1
 }
 
 # S3 Bucket for Frontend
@@ -75,8 +80,12 @@ resource "aws_cloudfront_distribution" "cdn" {
   }
 
   viewer_certificate {
-    cloudfront_default_certificate = true
+    acm_certificate_arn      = aws_acm_certificate.www_certificate.arn # Use ACM certificate ARN directly
+    ssl_support_method       = "sni-only"
+    minimum_protocol_version = "TLSv1.2_2021"
   }
+
+  depends_on = [aws_acm_certificate_validation.www_certificate] # Ensure validation is complete first
 }
 
 # S3 Bucket Policy for CloudFront OAI

@@ -114,7 +114,7 @@ resource "aws_ecr_repository" "backend_repo" {
 # Create CloudWatch Log Group for ECS Tasks
 resource "aws_cloudwatch_log_group" "ecs_log_group" {
   name              = "/ecs/me-backend-task"
-  retention_in_days = 7 # Adjust as needed for how long you want to keep logs
+  retention_in_days = 3
 }
 
 # ECS Task Definition for Backend
@@ -131,8 +131,8 @@ resource "aws_ecs_task_definition" "backend_task" {
   container_definitions = jsonencode([{
     name      = "me-backend-container"
     image     = "${aws_ecr_repository.backend_repo.repository_url}:latest"
-    cpu       = 256
-    memory    = 512
+    cpu       = 128 
+    memory    = 256
     essential = true
 
     portMappings = [{

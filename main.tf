@@ -12,15 +12,6 @@ resource "aws_s3_bucket" "frontend_bucket" {
   bucket = "me-frontend-bucket"
 }
 
-# Versioning on the S3 bucket to prevent accidental deletions
-resource "aws_s3_bucket_versioning" "frontend_bucket_versioning" {
-  bucket = aws_s3_bucket.frontend_bucket.bucket
-
-  versioning_configuration {
-    status = "Enabled"
-  }
-}
-
 # S3 Bucket for CloudFront Logs (in eu-west-1)
 resource "aws_s3_bucket" "cloudfront_logs_bucket" {
   bucket = "me-frontend-cloudfront-logs"
